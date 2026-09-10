@@ -42,6 +42,12 @@
         }
       ]
     ],
-    "scheme": "miamatch"
+    "scheme": "miamatch",
+    "owner": "youen_lg",
+    "extra": {
+      "eas": {
+        "projectId": "0b5e053e-cc8c-4338-8757-bff55c6da2a6"
+      }
+    }
   }
 }

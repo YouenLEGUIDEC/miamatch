@@ -54,12 +54,7 @@ Utiliser Expo Go SDK 57 sur les deux appareils tant que les modules utilisés y 
 
 ## 3. Préparer EAS
 
-Un compte Expo et une autorisation du fondateur sont nécessaires. Le projet EAS n’a pas été créé. Après autorisation :
-
-```sh
-npx eas-cli login
-npx eas-cli init
-```
+Un compte Expo et une autorisation du fondateur sont nécessaires. Le projet EAS est créé dans `youen_lg` : `0b5e053e-cc8c-4338-8757-bff55c6da2a6`. L’accès par le secret GitHub `EXPO_TOKEN` a été vérifié. Console : https://expo.dev/accounts/youen_lg/projects/miamatch . Le dépôt contient maintenant le véritable `extra.eas.projectId`.
 
 Ces commandes relient `app.json` au projet EAS réel ; ne pas inventer son `projectId`. Ajouter les deux valeurs publiques Supabase à l’environnement EAS du profil choisi. Les `.env` locaux ne doivent pas être commités.
 
@@ -105,3 +100,13 @@ Créer l’app dans Play Console après autorisation, configurer Play App Signin
 - Retour visuel sur petite taille d’écran, lecteur d’écran et gestes natifs.
 
 Les builds et les essais hébergés restent distincts des tests de code. L’état exact est dans `docs/VALIDATION.md`.
+
+## Essais préparés le 10 septembre 2026
+
+Le fondateur confirme avoir ajouté `miamatch://auth/callback` dans Supabase. iPhone est prioritaire ; Android est destiné à sa compagne.
+
+- Le workflow `expo-access.yml` a validé le compte `youen_lg` à partir du secret GitHub. Le jeton reste dans GitHub et n’est pas recopié dans le poste de travail.
+- `expo-setup.yml` a créé le projet Expo. Aucun abonnement ni build EAS payant n’est déclenché.
+- `android-preview.yml` prépare un APK autonome arm64 depuis un projet natif généré avec Expo, signé avec la clé de développement de ce projet. C’est un fichier de test, pas une signature de production. L’artefact GitHub expire après 14 jours. Les paramètres Supabase inclus sont uniquement l’URL et la clé publishable.
+- L’essai iPhone via Expo Go exige un serveur accessible. L’ouverture du tunnel ngrok a été rejetée par le contrôle automatique faute d’autorisation explicite pour exposer le serveur de développement sur Internet. Ne pas retenter ni contourner ce blocage sans cet accord. L’URL Expo Go serait différente du lien natif et devrait être ajoutée aux Redirect URLs pour tester la connexion email.
+- Aucune installation ou ouverture sur appareil physique n’a encore été vérifiée.
