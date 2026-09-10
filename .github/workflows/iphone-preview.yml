@@ -1,0 +1,71 @@
+name: Aperçu iPhone Expo Go temporaire
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/iphone-preview.yml]
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://vraijjvfduypysrphybx.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_fa9pxgUesm_b1RJpgOIkqg_R-e6_b1S
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Installer le tunnel temporaire
+        run: |
+          npm install --prefix "$RUNNER_TEMP/tunnel-tools" @expo/ngrok@4.1.3
+          ln -s "$RUNNER_TEMP/tunnel-tools/node_modules/@expo/ngrok" node_modules/@expo/ngrok
+      - name: Ouvrir le serveur autorisé
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          nohup node node_modules/expo/bin/cli start --go --tunnel --port 8081 --max-workers 2 > "$RUNNER_TEMP/metro.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/metro.pid"
+          node <<'JS'
+          const fs = require('node:fs');
+          (async () => {
+            for (let i = 0; i < 90; i++) {
+              try {
+                const result = await fetch('http://127.0.0.1:4040/api/tunnels').then(r => r.json());
+                const url = result.tunnels?.find(t => t.public_url.startsWith('https://'))?.public_url;
+                if (url) {
+                  const expoUrl = url.replace('https://', 'exp://');
+                  fs.mkdirSync('preview-link', {recursive:true});
+                  fs.writeFileSync('preview-link/link.json', JSON.stringify({url, expoUrl, redirectUrl:expoUrl+'/--/auth/callback', closesAt:new Date(Date.now()+30*60*1000).toISOString()},null,2));
+                  console.log('Aperçu prêt :', expoUrl);
+                  return;
+                }
+              } catch {}
+              await new Promise(r => setTimeout(r,2000));
+            }
+            console.log(fs.readFileSync(process.env.RUNNER_TEMP+'/metro.log','utf8'));
+            process.exitCode = 1;
+          })();
+          JS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iphone-preview-link
+          path: preview-link/link.json
+          retention-days: 1
+      - name: Maintenir l’aperçu pendant 30 minutes
+        run: |
+          for minute in $(seq 1 30); do
+            kill -0 "$(cat "$RUNNER_TEMP/metro.pid")"
+            sleep 60
+          done
+      - name: Fermer le serveur
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/metro.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/metro.pid")" || true
+          fi
