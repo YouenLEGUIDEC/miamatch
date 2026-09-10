@@ -1,0 +1,47 @@
+name: APK Android de test
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/android-preview.yml]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CI: '1'
+      EXPO_PUBLIC_SUPABASE_URL: https://vraijjvfduypysrphybx.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_fa9pxgUesm_b1RJpgOIkqg_R-e6_b1S
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm ci
+      - name: Générer le projet Android
+        run: node node_modules/expo/bin/cli prebuild --platform android --no-install
+      - name: Construire la version autonome de test
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon --max-workers=2 -PreactNativeArchitectures=arm64-v8a
+      - name: Vérifier et préparer le fichier installable
+        run: |
+          mkdir -p preview
+          apk_path=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$apk_path"
+          build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          "$build_tools/apksigner" verify "$apk_path"
+          cp "$apk_path" preview/miamatch-android-test.apk
+          echo 'Version Android de test, arm64, signée avec la clé de développement du projet généré. Ne pas publier sur un store.' > preview/LIRE-MOI.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: miamatch-android-test
+          path: preview/
+          retention-days: 14
+          if-no-files-found: error

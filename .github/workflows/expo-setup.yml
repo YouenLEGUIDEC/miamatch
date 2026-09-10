@@ -26,7 +26,7 @@ jobs:
         run: |
           eas_cli="$RUNNER_TEMP/eas-tools/node_modules/.bin/eas"
           "$eas_cli" project:init --help
-          "$eas_cli" project:init --account Youen_LG --non-interactive
+          "$eas_cli" project:init --account youen_lg --non-interactive
           node -e 'const c=require("./app.json").expo; console.log(JSON.stringify({owner:c.owner,projectId:c.extra?.eas?.projectId}));'
-          "$eas_cli" account:usage Youen_LG --json --non-interactive > "$RUNNER_TEMP/expo-usage.json"
+          "$eas_cli" account:usage youen_lg --json --non-interactive > "$RUNNER_TEMP/expo-usage.json"
           node -e 'const fs=require("node:fs"); const u=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/expo-usage.json","utf8")); console.log("Usage schema:",Object.keys(u));'
