@@ -3,13 +3,14 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 import { Button, Field, Label, Panel, Screen, Title } from '../ui/kit';
 import { useApp } from '../state/AppProvider';
-import { supabase, rpc } from '../data/supabase';
+import { supabase } from '../data/supabase';
+import * as Linking from 'expo-linking';
+import { sendEmailLink, finishEmailLogin } from '../data/emailAuth';
 import { theme as t } from '../ui/theme';
 export default function Welcome() {
   const app = useApp();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [token, setToken] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   async function run(fn: () => Promise<void>) {
@@ -23,28 +24,13 @@ export default function Welcome() {
     }
   }
   async function send() {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-      throw new Error('Saisissez une adresse email valide.');
-    const { error } = await supabase!.auth.signInWithOtp({ email: email.trim() });
-    if (error) throw error;
+    await sendEmailLink(email, name, Linking.createURL('auth/callback'));
     setSent(true);
   }
-  async function verify() {
-    const { error } = await supabase!.auth.verifyOtp({
-      email: email.trim(),
-      token: token.trim(),
-      type: 'email',
-    });
-    if (error) throw error;
-    await rpc('setup_profile', { display_name: name.trim() || 'Convive' });
-    const { data: member, error: memberError } = await supabase!
-      .from('household_members')
-      .select('household_id')
-      .eq('user_id', (await supabase!.auth.getUser()).data.user!.id)
-      .maybeSingle();
-    if (memberError) throw memberError;
-    if (member) {
-      await app.loadHousehold(member.household_id);
+  async function resume() {
+    const household = await finishEmailLogin();
+    if (household) {
+      await app.loadHousehold(household);
       router.replace('/');
     } else router.replace('/crew');
   }
@@ -77,7 +63,7 @@ export default function Welcome() {
       />
       {supabase ? (
         <Panel>
-          <Label>Se connecter par code email</Label>
+          <Label>Se connecter par email</Label>
           <Field
             accessibilityLabel="Adresse email"
             placeholder="vous@exemple.fr"
@@ -87,22 +73,21 @@ export default function Welcome() {
             onChangeText={setEmail}
           />
           {sent && (
-            <Field
-              accessibilityLabel="Code de connexion"
-              placeholder="Code reçu par email"
-              keyboardType="number-pad"
-              value={token}
-              onChangeText={setToken}
-            />
+            <Label>
+              Ouvrez l’email sur ce téléphone et touchez « Sign in » ou « Confirm your mail ».
+              Revenez ensuite dans Miamatch. Utilisez le dernier lien reçu.
+            </Label>
           )}
-          <Button disabled={busy} onPress={() => void run(sent ? verify : send)}>
-            {busy ? 'Un instant…' : sent ? 'Confirmer mon code' : 'Recevoir mon code'}
+          <Button disabled={busy} onPress={() => void run(app.userId ? resume : send)}>
+            {busy
+              ? 'Un instant…'
+              : app.userId
+                ? 'Continuer ma connexion'
+                : sent
+                  ? 'Recevoir un nouveau lien'
+                  : 'Recevoir mon lien'}
           </Button>
-          {sent && (
-            <Button secondary onPress={() => setSent(false)}>
-              Changer d’adresse / renvoyer
-            </Button>
-          )}
+          <Label muted>Pour cet essai, utilisez l’adresse de votre compte Supabase.</Label>
         </Panel>
       ) : (
         <Label muted>

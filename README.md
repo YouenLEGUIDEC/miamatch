@@ -6,7 +6,7 @@
 
 Application Expo / React Native en français, avec navigation, identité visuelle, démo persistante sur le téléphone, préférences, mood, swipe, favoris, mode aléatoire filtré, deux convives sur le même téléphone, matchs, choix des repas, planning réordonnable, courses agrégées et garde-manger.
 
-L’adaptateur Supabase implémente la connexion par code email, la création du foyer, les invitations à usage unique, les votes privés, les matchs validés côté serveur et les courses partagées par Broadcast privé. Les migrations, le jeu de développement et les tests de permissions sont inclus. **Le projet Supabase de développement est créé et le schéma est installé. Le réglage des emails et les essais sur deux téléphones restent à terminer.**
+L’adaptateur Supabase implémente la connexion par lien email, la création du foyer, les invitations à usage unique, les votes privés, les matchs validés côté serveur et les courses partagées par Broadcast privé. Les migrations, le jeu de développement et les tests de permissions sont inclus. **Le projet Supabase de développement est créé et le schéma est installé. L’URL de retour doit être autorisée et les essais sur deux téléphones restent à terminer.**
 
 Les 16 fiches actuelles sont des **fixtures synthétiques de développement**, avec illustrations provisoires. Elles ne sont pas validées en cuisine. Pas de notes, de chiffres nutritionnels ou de recettes réelles inventés. Le catalogue culinaire et les photos autorisées restent à sélectionner : voir [RECIPE_SOURCES.md](RECIPE_SOURCES.md).
 
@@ -48,7 +48,7 @@ cp .env.example .env
 npm start -- --clear
 ```
 
-Les migrations et le seed sont déjà appliqués au projet Miamatch. Le template d’email Supabase doit afficher le code `{{ .Token }}`. Aucun email n’a été envoyé pendant le développement.
+Les migrations et le seed sont déjà appliqués au projet Miamatch. Les templates email par défaut sont conservés ; autoriser `miamatch://auth/callback` dans les Redirect URLs pour les builds natifs. Aucun email n’a été envoyé pendant le développement.
 
 ## Vérifier
 

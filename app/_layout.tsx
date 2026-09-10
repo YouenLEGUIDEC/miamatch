@@ -25,13 +25,14 @@ function Navigation() {
   const segments = useSegments();
   const root = segments[0];
   useEffect(() => {
-    if (!app.ready) return;
+    if (!app.ready || root === 'auth') return;
     if (!app.userId && root !== 'welcome') router.replace('/welcome');
     else if (app.userId && !app.snapshot && root !== 'crew' && root !== 'welcome')
       router.replace('/crew');
     else if (app.snapshot && root === 'welcome') router.replace('/');
   }, [app.ready, app.userId, app.snapshot, root]);
-  if (!app.ready || (!app.snapshot && root !== 'welcome' && root !== 'crew')) return <Loading />;
+  if (!app.ready || (!app.snapshot && root !== 'welcome' && root !== 'crew' && root !== 'auth'))
+    return <Loading />;
   return (
     <Stack
       screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.cream } }}

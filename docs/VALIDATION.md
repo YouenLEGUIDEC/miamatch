@@ -16,7 +16,7 @@
 | Vérification visuelle dans le navigateur               | Bloquée : le navigateur distant ne peut pas ouvrir le serveur localhost                                              |
 | APK / IPA installés sur de vrais appareils             | Non effectué : comptes, signature et appareils à raccorder                                                           |
 | Supabase hébergé                                       | Réussi : 18 tables avec RLS, 16 fixtures, migrations appliquées, tests transactionnels sans données résiduelles      |
-| Vrais emails et WebSockets sur appareils               | Non effectué : templates OTP à configurer et appareils à raccorder                                                   |
+| Vrais emails et WebSockets sur appareils               | Non effectué : URL de retour à autoriser et appareils à raccorder                                                    |
 | Catalogue culinaire, photos et nutrition de production | Non validé ; fixtures explicites uniquement                                                                          |
 
 Les tests d’interaction utilisent les vrais écrans et routes Expo Router ; seuls les services natifs de test, fontes et stockage sont remplacés. La file de synchronisation est testée avec un serveur simulé. Les tests SQL exécutent le vrai schéma et les vraies politiques, mais simulent l’identité fournie par Auth et le transport Realtime. Il ne faut donc pas présenter ces tests comme un essai sur deux téléphones.
@@ -37,7 +37,7 @@ Le workflow `.github/workflows/check.yml` prépare ces contrôles de code et l�
 
 ## Avant une vraie bêta
 
-Configurer les templates email Supabase ; tester OTP et invitation sur deux comptes ; vérifier le canal privé avec un troisième compte ; essayer une coupure réseau et des coches concurrentes sur appareils. Remplacer les fixtures par un lot de recettes autorisées, testées et sourcées. Vérifier l’affichage et l’accessibilité sur petits écrans iOS/Android. Créer les builds signés seulement après les accès et autorisations nécessaires.
+Autoriser l’URL de retour Supabase ; tester les liens email et invitation sur deux comptes ; vérifier le canal privé avec un troisième compte ; essayer une coupure réseau et des coches concurrentes sur appareils. Remplacer les fixtures par un lot de recettes autorisées, testées et sourcées. Vérifier l’affichage et l’accessibilité sur petits écrans iOS/Android. Créer les builds signés seulement après les accès et autorisations nécessaires.
 
 ## Validation hébergée
 
@@ -46,3 +46,9 @@ Configurer les templates email Supabase ; tester OTP et invitation sur deux comp
 L’audit Supabase ne signale plus d’accès anonyme à une fonction privilégiée. Il signale les sept fonctions SECURITY DEFINER accessibles aux utilisateurs connectés : ces points d’entrée sont intentionnels, avec contrôle d’identité ou d’appartenance et chemin de recherche vide. Voir [la règle Supabase](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable). Les fonctions internes ne sont pas exécutables par les clients. La lecture directe des invitations est explicitement refusée.
 
 La CLI n’étant pas disponible dans l’environnement, les migrations distantes ont été appliquées par le connecteur puis enregistrées avec leurs versions réelles. Le test PGlite applique toutes les migrations et reproduit les grants par défaut Supabase pour prévenir une régression des accès anonymes.
+
+## Connexion mobile par lien — 10 septembre 2026
+
+Le parcours par code est remplacé par un lien email compatible avec les templates par défaut. Tests ajoutés : redirection explicite, persistance du prénom, erreur SMTP compréhensible, échange PKCE unique, refus d’un lien expiré, profil existant préservé, callback accessible avant connexion et vecteur S256 RFC 7636 via l’adaptateur crypto natif. Les appels Auth et les fonctions cryptographiques natives sont simulés dans Jest ; aucune réception d’email ni ouverture sur un vrai téléphone n’est revendiquée.
+
+Le réglage distant Redirect URLs, l’accès Expo pour construire/distribuer et les essais sur appareils restent nécessaires. Aucun compte externe de test n’a été créé et aucun email envoyé. Les builds iPhone/Android restent non signés tant que la distribution n’est pas raccordée.

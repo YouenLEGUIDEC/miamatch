@@ -15,13 +15,19 @@ Créé le 9 septembre 2026 dans l’organisation Miamatch, offre Free, région P
 
 Ne pas réexécuter les migrations manuellement sur ce projet. Pour un autre environnement vide, appliquer les deux migrations dans l’ordre puis `supabase/seed.sql`. Ne jamais lancer `db reset` sur un environnement partagé ou de production. Ne transmettre aucun mot de passe de base ou clé service role dans le chat ou le dépôt.
 
-### Email OTP
+### Connexion par lien email — iPhone et Android
 
-Dernière étape manuelle : ouvrir https://supabase.com/dashboard/project/vraijjvfduypysrphybx/auth/templates . Le connecteur ne permet pas de modifier ces réglages. Dans Authentication → Email Templates, adapter le template **Magic Link** pour afficher `{{ .Token }}`. Le mobile utilise `signInWithOtp` puis `verifyOtp` avec le code saisi ; un lien email seul ne suffit pas à ce parcours. Pour les utilisateurs initiaux, vérifier également le template de confirmation et y conserver le code lorsque nécessaire.
+Le parcours utilise maintenant les templates Supabase par défaut, sans modification ni domaine à acheter. L’app demande le lien avec `emailRedirectTo`, échange le code PKCE au retour dans `auth/callback`, conserve le nom d’un profil existant et charge son foyer. La session et le vérificateur PKCE sont conservés dans SecureStore sur mobile. Un adaptateur Expo Crypto apporte un aléa sécurisé et SHA-256 sur Hermes ; aucune dégradation vers un challenge PKCE en clair n’est acceptée.
 
-Le fichier `supabase/templates/email-otp.html` fournit le contenu prêt à copier dans **Magic Link** et **Confirm signup**.
+**Étape manuelle nécessaire :** dans [Authentication → URL Configuration](https://supabase.com/dashboard/project/vraijjvfduypysrphybx/auth/url-configuration), ajouter exactement `miamatch://auth/callback` aux **Redirect URLs**. Le connecteur ne peut pas modifier ce réglage. Ne pas remplacer ni supprimer les autres adresses. Le changement de `config.toml` concerne seulement Supabase local.
 
-L’email de test Supabase peut être limité aux destinataires autorisés. Un SMTP externe est généralement nécessaire pour de vrais testeurs hors équipe ; aucune configuration ou dépense SMTP n’est engagée ici. [Documentation OTP](https://supabase.com/docs/guides/auth/auth-email-passwordless).
+Cette adresse fonctionne avec une version native installée de Miamatch. Avec Expo Go, `Linking.createURL` utilise une adresse `exp://…/--/auth/callback` dépendante du serveur : il faut autoriser cette adresse exacte et maintenir le serveur accessible. Le QR Expo Go ne constitue pas une version autonome. Pour un essai web local, autoriser `http://localhost:8081/auth/callback` et ouvrir le lien dans le navigateur qui a demandé la connexion. Une version web distante doit utiliser HTTPS et sa propre URL exacte.
+
+Ouvrir le dernier email sur le même téléphone et dans la même application que celle ayant demandé le lien. Les liens expirés ou ouverts ailleurs présentent un message et permettent de recommencer. Ne pas partager les liens de connexion ou les paramètres qu’ils contiennent.
+
+**Limite du service gratuit par défaut :** seules les adresses membres de l’équipe Supabase reçoivent les emails, actuellement au maximum deux emails par heure pour le projet. Commencer avec l’adresse du fondateur. Tester ce même compte sur deux appareils valide la synchronisation mais ne représente pas deux convives distincts. Ne pas inviter des testeurs dans l’administration Supabase uniquement pour contourner cette limite : prévoir un service email externe avant une bêta multi-utilisateurs. [Documentation SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+
+La [modification du 3 juin 2026](https://supabase.com/changelog/46599-changes-to-email-template-customisation-on-free-tier) explique pourquoi les templates ne sont pas modifiables sur ce projet Free. Le fichier `supabase/templates/email-otp.html` est une ancienne préparation pour une éventuelle connexion par code ; ne pas l’appliquer au parcours par lien actuel.
 
 ### Configuration du mobile
 
@@ -90,7 +96,7 @@ Créer l’app dans Play Console après autorisation, configurer Play App Signin
 
 ## 8. Critères avant les deux premiers utilisateurs
 
-- Connexion OTP réussie sur chaque appareil et reprise de session.
+- Connexion par lien réussie sur chaque appareil et reprise de session.
 - Invitation consommée une fois ; isolation d’un troisième compte.
 - Filtrage des restrictions des deux personnes et match seulement après leurs deux votes positifs.
 - Cinq repas différents, quantités justes, courses sans doublons et présence au garde-manger.

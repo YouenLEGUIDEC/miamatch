@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Layout from '../app/_layout';
 import TabLayout from '../app/(tabs)/_layout';
 import Welcome from '../src/screens/Welcome';
+import AuthCallback from '../src/screens/AuthCallback';
 import Home from '../src/screens/Home';
 import Preferences from '../src/screens/Preferences';
 import Week from '../src/screens/Week';
@@ -35,6 +36,7 @@ const routes = {
   '(tabs)/shopping': Shopping,
   '(tabs)/profile': Profile,
   welcome: Welcome,
+  'auth/callback': AuthCallback,
   preferences: Preferences,
   week: Week,
   deck: Deck,
@@ -93,3 +95,11 @@ test('two separate same-phone votes open the Miamatch screen, not a fabricated m
     1,
   );
 }, 15000);
+
+test('cold-start invalid email callback stays visible before authentication', async () => {
+  await renderRouter(routes, { initialUrl: '/auth/callback?error=access_denied' });
+  await screen.findByText('Lien invalide ou expiré. Demandez un nouveau lien depuis la connexion.');
+  expect(screen.queryByText('Explorer la démo')).toBeNull();
+  await fireEvent.press(screen.getByText('Retour à la connexion'));
+  await screen.findByText('Explorer la démo');
+});
