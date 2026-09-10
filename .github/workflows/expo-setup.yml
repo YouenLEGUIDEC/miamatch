@@ -1,0 +1,32 @@
+name: Raccorder le projet Expo
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/expo-setup.yml]
+permissions:
+  contents: read
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Installer EAS CLI
+        run: npm install --prefix "$RUNNER_TEMP/eas-tools" eas-cli@23.2.0
+      - name: Raccorder Miamatch au compte autorisé
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          CI: '1'
+        run: |
+          eas_cli="$RUNNER_TEMP/eas-tools/node_modules/.bin/eas"
+          "$eas_cli" project:init --help
+          "$eas_cli" project:init --account Youen_LG --non-interactive
+          node -e 'const c=require("./app.json").expo; console.log(JSON.stringify({owner:c.owner,projectId:c.extra?.eas?.projectId}));'
+          "$eas_cli" account:usage Youen_LG --json --non-interactive > "$RUNNER_TEMP/expo-usage.json"
+          node -e 'const fs=require("node:fs"); const u=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+"/expo-usage.json","utf8")); console.log("Usage schema:",Object.keys(u));'
