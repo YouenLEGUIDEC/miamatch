@@ -1,28 +1,25 @@
 # Connexion et distribution de Miamatch
 
-Ce guide prépare les étapes externes. **Ne pas souscrire, engager de frais ni envoyer sur un store sans l’accord du fondateur.** Aucun build signé, projet Supabase distant ou publication d’application n’a été créé automatiquement.
+**Ne pas souscrire, engager de frais ni envoyer sur un store sans l’accord du fondateur.** Aucun build signé ou publication d’application n’a été créé.
 
 ## 1. Projet Supabase de développement
 
-Action du fondateur : créer un projet gratuit dans [Supabase](https://supabase.com/dashboard), de préférence dans une région proche des deux testeurs. Conserver le mot de passe de la base privé. Transmettre uniquement la **Project URL** et la **publishable key** pour raccorder le mobile ; ces deux valeurs sont conçues pour être publiques, la sécurité repose sur les RLS.
+Créé le 9 septembre 2026 dans l’organisation Miamatch, offre Free, région Paris (`eu-west-3`). Coût de création annoncé : 0 par mois.
 
-Pour appliquer le schéma, l’ingénieur aura besoin d’un accès autorisé au projet. Deux chemins sont possibles : exécuter les fichiers dans SQL Editor sur le nouveau projet, ou utiliser la CLI authentifiée. Ne pas coller de mot de passe de base ou de service role dans le chat ou le dépôt.
+- Projet : `vraijjvfduypysrphybx`.
+- Console : https://supabase.com/dashboard/project/vraijjvfduypysrphybx
+- API : https://vraijjvfduypysrphybx.supabase.co
+- Les deux migrations de `supabase/migrations/` sont appliquées et leurs versions correspondent à l’historique distant.
+- Le seed de 16 fixtures est chargé ; ce ne sont pas des recettes culinaires validées.
+- Le fichier `.env` du poste de travail est raccordé avec la clé publishable, hors Git.
 
-Dans SQL Editor du projet **de développement vide** : exécuter `supabase/migrations/202609090001_core.sql`, puis `supabase/seed.sql`. Le second fichier ne contient que des fixtures. Il ne transforme pas ces fiches en recettes de production.
-
-Avec une CLI Supabase authentifiée, l’équivalent préparé est :
-
-```sh
-npx supabase login
-npx supabase link --project-ref VOTRE_PROJECT_REF
-npx supabase db push --include-seed
-```
-
-Le mot de passe et les accès sont saisis dans le canal sécurisé de l’outil concerné. Ne jamais lancer `db reset` sur un environnement partagé ou de production.
+Ne pas réexécuter les migrations manuellement sur ce projet. Pour un autre environnement vide, appliquer les deux migrations dans l’ordre puis `supabase/seed.sql`. Ne jamais lancer `db reset` sur un environnement partagé ou de production. Ne transmettre aucun mot de passe de base ou clé service role dans le chat ou le dépôt.
 
 ### Email OTP
 
-Dans Authentication → Email Templates, adapter le template **Magic Link** pour afficher `{{ .Token }}`. Le mobile utilise `signInWithOtp` puis `verifyOtp` avec le code saisi ; un lien email seul ne suffit pas à ce parcours. Pour les utilisateurs initiaux, vérifier également le template de confirmation et y conserver le code lorsque nécessaire.
+Dernière étape manuelle : ouvrir https://supabase.com/dashboard/project/vraijjvfduypysrphybx/auth/templates . Le connecteur ne permet pas de modifier ces réglages. Dans Authentication → Email Templates, adapter le template **Magic Link** pour afficher `{{ .Token }}`. Le mobile utilise `signInWithOtp` puis `verifyOtp` avec le code saisi ; un lien email seul ne suffit pas à ce parcours. Pour les utilisateurs initiaux, vérifier également le template de confirmation et y conserver le code lorsque nécessaire.
+
+Le fichier `supabase/templates/email-otp.html` fournit le contenu prêt à copier dans **Magic Link** et **Confirm signup**.
 
 L’email de test Supabase peut être limité aux destinataires autorisés. Un SMTP externe est généralement nécessaire pour de vrais testeurs hors équipe ; aucune configuration ou dépense SMTP n’est engagée ici. [Documentation OTP](https://supabase.com/docs/guides/auth/auth-email-passwordless).
 

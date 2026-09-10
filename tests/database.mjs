@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 const db = new PGlite();
 await db.exec(`create role anon; create role authenticated;
+alter default privileges grant execute on functions to anon, authenticated;
 create schema auth; create table auth.users(id uuid primary key);
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 grant usage on schema auth to authenticated,anon; grant execute on function auth.uid() to authenticated,anon;
@@ -13,9 +14,13 @@ create schema realtime; create table realtime.messages(extension text, topic tex
 grant usage on schema realtime to authenticated; grant select on realtime.messages to authenticated;
 create function realtime.topic() returns text language sql stable as $$ select current_setting('realtime.topic',true) $$;
 create function realtime.send(payload jsonb,event text,topic text,private boolean) returns void language sql as $$ insert into realtime.messages values('broadcast',topic,payload) $$;`);
-await db.exec(
-  fs.readFileSync(new URL('../supabase/migrations/202609090001_core.sql', import.meta.url), 'utf8'),
-);
+const migrations = new URL('../supabase/migrations/', import.meta.url);
+for (const file of fs
+  .readdirSync(migrations)
+  .filter((f) => f.endsWith('.sql'))
+  .sort()) {
+  await db.exec(fs.readFileSync(new URL(file, migrations), 'utf8'));
+}
 await db.exec(fs.readFileSync(new URL('../supabase/seed.sql', import.meta.url), 'utf8'));
 const a = randomUUID(),
   b = randomUUID(),
@@ -137,6 +142,7 @@ assert.ok(messages.length > 0);
 assert.deepEqual(Object.keys(messages[0].payload), ['revision'], 'no private votes in broadcasts');
 await db.exec('reset role; set role anon');
 await assert.rejects(() => call('household_snapshot', [h]), /permission denied/);
+await assert.rejects(() => call('is_member', [h]), /permission denied/);
 await db.close();
 console.log(
   'PASS: migration, seed, auth roles, cross-household RLS, private swipes, one-use invite, matching, preferences, plan, shopping, pantry, idempotency, broadcast authorization.',
