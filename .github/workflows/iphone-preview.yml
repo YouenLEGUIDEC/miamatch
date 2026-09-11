@@ -29,6 +29,7 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
+          export EXPO_TUNNEL_SUBDOMAIN="miamatch-preview-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           nohup node node_modules/expo/bin/cli start --go --tunnel --port 8081 --max-workers 2 > "$RUNNER_TEMP/metro.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/metro.pid"
           node <<'JS'
@@ -39,13 +40,19 @@ jobs:
                 const result = await fetch('http://127.0.0.1:4040/api/tunnels').then(r => r.json());
                 const url = result.tunnels?.find(t => t.public_url.startsWith('https://'))?.public_url;
                 if (url) {
+                  const response = await fetch(url, {headers:{'expo-platform':'ios',accept:'application/expo+json','ngrok-skip-browser-warning':'1'},signal:AbortSignal.timeout(30000)});
+                  if (!response.ok) throw new Error('Manifest HTTP '+response.status);
+                  const manifest = await response.json();
+                  if (!manifest.launchAsset?.url) throw new Error('Missing iOS launch asset');
+                  const bundle = await fetch(manifest.launchAsset.url, {headers:{'ngrok-skip-browser-warning':'1'},signal:AbortSignal.timeout(120000)});
+                  if (!bundle.ok || (await bundle.arrayBuffer()).byteLength < 1000) throw new Error('Invalid iOS bundle');
                   const expoUrl = url.replace('https://', 'exp://');
                   fs.mkdirSync('preview-link', {recursive:true});
                   fs.writeFileSync('preview-link/link.json', JSON.stringify({url, expoUrl, redirectUrl:expoUrl+'/--/auth/callback', closesAt:new Date(Date.now()+30*60*1000).toISOString()},null,2));
                   console.log('Aperçu prêt :', expoUrl);
                   return;
                 }
-              } catch {}
+              } catch (error) { console.log('En attente :', error.message); }
               await new Promise(r => setTimeout(r,2000));
             }
             console.log(fs.readFileSync(process.env.RUNNER_TEMP+'/metro.log','utf8'));
