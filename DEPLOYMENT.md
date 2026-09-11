@@ -1,6 +1,6 @@
 # Connexion et distribution de Miamatch
 
-**Ne pas souscrire, engager de frais ni envoyer sur un store sans l’accord du fondateur.** Aucun build signé ou publication d’application n’a été créé.
+**Ne pas souscrire, engager de frais ni envoyer sur un store sans l’accord du fondateur.** Un APK Android de test a été compilé avec succès le 10 septembre 2026, signé avec une clé de développement. Aucune publication sur un store ni signature de production.
 
 ## 1. Projet Supabase de développement
 
@@ -108,5 +108,5 @@ Le fondateur confirme avoir ajouté `miamatch://auth/callback` dans Supabase. iP
 - Le workflow `expo-access.yml` a validé le compte `youen_lg` à partir du secret GitHub. Le jeton reste dans GitHub et n’est pas recopié dans le poste de travail.
 - `expo-setup.yml` a créé le projet Expo. Aucun abonnement ni build EAS payant n’est déclenché.
 - `android-preview.yml` prépare un APK autonome arm64 depuis un projet natif généré avec Expo, signé avec la clé de développement de ce projet. C’est un fichier de test, pas une signature de production. L’artefact GitHub expire après 14 jours. Les paramètres Supabase inclus sont uniquement l’URL et la clé publishable.
-- L’essai iPhone via Expo Go exige un serveur accessible. L’ouverture du tunnel ngrok a été rejetée par le contrôle automatique faute d’autorisation explicite pour exposer le serveur de développement sur Internet. Ne pas retenter ni contourner ce blocage sans cet accord. L’URL Expo Go serait différente du lien natif et devrait être ajoutée aux Redirect URLs pour tester la connexion email.
+- Le fondateur a explicitement autorisé le tunnel ngrok temporaire pour Expo Go. Le workflow `iphone-preview.yml` ouvre le serveur pendant 30 minutes puis le ferme. Il utilise un sous-domaine sans underscore et vérifie le manifeste iOS et son bundle en HTTPS avant de fournir le lien. L’URL Expo Go change à chaque exécution et doit être ajoutée aux Redirect URLs pour tester la connexion email. Le bouton « Explorer la démo » fonctionne sans cette configuration. Une compilation ou un téléchargement réussi ne remplace pas un test sur téléphone réel.
 - Aucune installation ou ouverture sur appareil physique n’a encore été vérifiée.
